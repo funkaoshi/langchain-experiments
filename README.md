@@ -5,7 +5,9 @@
 
 1. Install ollama using their [download instructions][1]. 
 2. Install Poetry: `curl -sSL https://install.python-poetry.org | python3 -`
-3. Install project dependencies: `poetry install`
+3. Install project dependencies: `poetry install`. (If you get a bunch of
+   weird errors disable the python keyring and try again
+   `export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`.)
 
 ## twitter.py
 
