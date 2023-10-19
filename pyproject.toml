@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "langchain-experiments"
+version = "0.1.0"
+description = ""
+authors = ["Ramanan Sivaranjan <ramanan@funkaoshi.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+langchain = "^0.0.317"
+openai = "^0.28.1"
+jq = "^1.6.0"
+chromadb = "^0.4.14"
+loguru = "^0.7.2"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.10.0"
+isort = "^5.12.0"
+pre-commit = "^3.5.0"
+ruff = "^0.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
