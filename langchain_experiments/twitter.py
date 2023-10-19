@@ -31,14 +31,14 @@ def load_tweets_into_db(path: str):
     logger.debug(f"{len(data)} LangChain documents created from tweets.")
 
     # break up the text of the tweets into smaller chunks stored in a vector database
-    # todo: this is hella slow, hence the 100 tweet limit
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=0)
-    splits = text_splitter.split_documents(data[:100])
+    splits = text_splitter.split_documents(data)
 
     logger.debug(f"LangChain documents split into {len(splits)} chunks.")
 
+    # todo: this is hella slow, hence the 100 tweet limit
     vectorstore = Chroma.from_documents(
-        documents=splits, embedding=OllamaEmbeddings(), persist_directory="./chroma_db"
+        documents=splits[:100], embedding=OllamaEmbeddings(), persist_directory="./chroma_db"
     )
 
     logger.debug("VectorStore populated and ready to be queried.")
