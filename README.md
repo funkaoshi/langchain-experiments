@@ -2,12 +2,13 @@
 
 ## Prerequisites
 
-
-1. Install ollama using their [download instructions][1]. 
+1. Install ollama using their [download instructions][1]. In another terminal
+   run the llama2 model: `ollama run llama2`.
 2. Install Poetry: `curl -sSL https://install.python-poetry.org | python3 -`
 3. Install project dependencies: `poetry install`. (If you get a bunch of
    weird errors disable the python keyring and try again
    `export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring`.)
+4. Install pre-commit hooks: `pre-commit install`.
 
 ## twitter.py
 
