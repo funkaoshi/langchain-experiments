@@ -1,12 +1,11 @@
 import argparse
 
-from langchain.chains import RetrievalQA
 from langchain.document_loaders import JSONLoader
 from langchain.embeddings import OllamaEmbeddings
 from langchain.llms import Ollama
 from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
+from langchain.vectorstores import FAISS, VectorStore
 from loguru import logger
 
 
@@ -18,7 +17,7 @@ def metadata_func(record: dict, metadata: dict) -> dict:
     return metadata
 
 
-def load_tweets_into_db(path: str):
+def load_tweets_into_db(path: str) -> VectorStore:
     # Load all my tweets from a twitter export into langchain documents
     loader = JSONLoader(
         file_path=path,
@@ -36,20 +35,26 @@ def load_tweets_into_db(path: str):
 
     logger.debug(f"LangChain documents split into {len(splits)} chunks.")
 
-    # todo: this is hella slow, hence the 100 tweet limit
-    vectorstore = Chroma.from_documents(
-        documents=splits[:100], embedding=OllamaEmbeddings(), persist_directory="./chroma_db"
-    )
+    vectorstore = FAISS.from_documents(documents=splits, embedding=OllamaEmbeddings())
+
+    # persist to disk
+    vectorstore.save_local("faiss_index")
 
     logger.debug("VectorStore populated and ready to be queried.")
 
     return vectorstore
 
 
-def load_tweets_from_db():
-    vectorstore = Chroma(
-        persist_directory="./chroma_db", embedding_function=OllamaEmbeddings()
-    )
+def load_tweets_from_db(path: str | None = None) -> VectorStore:
+    vectorstore = None
+
+    if path:
+        # rebuild database with the supplied tweets
+        vectorstore = load_tweets_into_db(path)
+
+    if not vectorstore:
+        # use existing database to load tweets
+        vectorstore = FAISS.load_local("faiss_index", OllamaEmbeddings())
 
     logger.debug("VectorStore loaded from disk.")
 
@@ -57,37 +62,34 @@ def load_tweets_from_db():
 
 
 def main(query: str, path: str | None):
-    # Load tweets from a twitter export into a vector database
-    if path:
-        vectorstore = load_tweets_into_db(args.load_tweets)
-    else:
-        vectorstore = load_tweets_from_db()
+    vectorstore = load_tweets_from_db(path)
 
     logger.debug("Connect to llama2 model running in Ollama")
 
-    ollama = Ollama(base_url="http://localhost:11434", model="llama2")
+    tweets = vectorstore.as_retriever().get_relevant_documents(query)
 
-    logger.debug("Create RetrievalQA chain we will query against.")
+    tweets = [f" - {d.page_content}" for d in tweets]
 
-    qa = RetrievalQA.from_chain_type(
-        llm=ollama,
-        chain_type="stuff",
-        retriever=vectorstore.as_retriever(),
-        verbose=True,
-    )
+    logger.debug(tweets)
 
     prompt_template = PromptTemplate.from_template(
         """
-        You are an AI bot that has read all of my tweets on twitter, they
-        are the additional context you've been given to understand my queries.
+        These are some tweets I have written:
+        
+        {tweets}
+
+        Can you use that additional context to answer the following question:
 
         {query}
+
+        You should be as to the point and specific as possible, and ignore
+        tweets that seem irrelevant.
         """
     )
 
-    logger.debug("Query the RetrievalQA chain.")
+    ollama = Ollama(base_url="http://localhost:11434", model="llama2")
 
-    logger.info(qa.run(prompt_template.format(query=query)))
+    print(ollama(prompt_template.format(tweets=tweets, query=query)))
 
 
 if __name__ == "__main__":

@@ -12,8 +12,7 @@ openai = "*"
 jq = "^1.6"
 chromadb = "*"
 loguru = "*"
-llama-cpp-python = "^0.2.11"
-
+llama-cpp-python = {extras = ["server"], version = "^0.2.11"}
 
 [tool.poetry.group.dev.dependencies]
 black = "~23"
