@@ -15,7 +15,7 @@ loguru = "*"
 llama-cpp-python = {extras = ["server"], version = "^0.2.11"}
 
 [tool.poetry.group.dev.dependencies]
-black = "~23"
+black = ">=23"
 isort = "*"
 pre-commit = "~3"
 ruff = "*"
